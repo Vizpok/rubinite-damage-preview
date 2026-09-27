@@ -6,6 +6,8 @@ Este mod muestra en la barra de vida del jefe, con un tramo **amarillo** parpade
 
 El daño no es un cálculo aproximado mío: se usa la misma fórmula que el juego usa al golpear. Incluye las mejoras de Estocada, los talismanes y la menor resistencia de los jefes en la segunda vuelta. Si llevas el talismán *Maestría de Marcas*, muestra el daño de una sola marca, que es lo que hace el golpe.
 
+![Barra de La Bestia con el tramo amarillo que marca el daño de la Estocada](capturas/vista-previa-danio.webp)
+
 ## Cómo instalar
 
 1. Descarga `DamagePreview.exe` de la [última versión](../../releases/latest).
