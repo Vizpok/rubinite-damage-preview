@@ -1,6 +1,6 @@
-// Instalador de "Vista previa de daño" para Rubinite.
-// Copia RubinitePreviaDanio.dll a Rubinite_Data\Managed e inserta al inicio de BossUI.Update():
-//     RubinitePreviaDanio.Previa.Actualizar(this);
+// DamagePreview: instalador de la vista previa del daño para Rubinite.
+// Copia RubiniteDamagePreview.dll a Rubinite_Data\Managed e inserta al inicio de BossUI.Update():
+//     RubiniteDamagePreview.Previa.Actualizar(this);
 // Desinstalar quita esa llamada y el DLL. No toca nada más, así que convive con otros mods.
 
 using System;
@@ -14,7 +14,7 @@ using Microsoft.Win32;
 
 static class Programa
 {
-    const string Ayudante = "RubinitePreviaDanio";
+    const string Ayudante = "RubiniteDamagePreview";
     static bool conMenu;
 
     static int Main(string[] args)
@@ -58,7 +58,7 @@ static class Programa
             Console.WriteLine();
         }
         if (accion != "1" && accion != "2") { Console.WriteLine("Opción no válida."); Pausa(); return 1; }
-        if (Process.GetProcessesByName("Rubinite").Length > 0)
+        if (JuegoAbierto(juego))
         {
             Console.WriteLine("El juego está abierto. Ciérralo y vuelve a intentarlo.");
             Pausa(); return 1;
@@ -69,6 +69,22 @@ static class Programa
         else Parche.Desinstalar(managed);
         Pausa();
         return 0;
+    }
+
+    // Solo cuenta si el Rubinite.exe abierto es el de esta carpeta (se puede tener más de una copia).
+    static bool JuegoAbierto(string juego)
+    {
+        string esperado = Path.GetFullPath(Path.Combine(juego, "Rubinite.exe"));
+        foreach (Process p in Process.GetProcessesByName("Rubinite"))
+        {
+            try
+            {
+                if (string.Equals(Path.GetFullPath(p.MainModule.FileName), esperado, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            catch { return true; }   // si no se puede saber, mejor no arriesgar
+        }
+        return false;
     }
 
     public static byte[] Recurso(string nombre)
@@ -122,7 +138,9 @@ static class Programa
 
 static class Parche
 {
-    const string Ayudante = "RubinitePreviaDanio";
+    const string Ayudante = "RubiniteDamagePreview";
+    // Nombre que usaba la primera versión; se reconoce para actualizar o desinstalar sin dejar restos.
+    static readonly string[] Nombres = { Ayudante, "RubinitePreviaDanio" };
 
     static Mono.Cecil.AssemblyDefinition Leer(string managed, string ruta)
     {
@@ -144,7 +162,7 @@ static class Parche
     static bool EsNuestraLlamada(Mono.Cecil.Cil.Instruction i)
     {
         var mr = i.Operand as Mono.Cecil.MethodReference;
-        return i.OpCode == Mono.Cecil.Cil.OpCodes.Call && mr != null && mr.DeclaringType.Namespace == Ayudante;
+        return i.OpCode == Mono.Cecil.Cil.OpCodes.Call && mr != null && Nombres.Contains(mr.DeclaringType.Namespace);
     }
 
     static void Guardar(Mono.Cecil.AssemblyDefinition juego, string ruta)
@@ -159,16 +177,20 @@ static class Parche
     {
         string rutaAyudante = Path.Combine(managed, Ayudante + ".dll");
         File.WriteAllBytes(rutaAyudante, ayudante);
+        string anterior = Path.Combine(managed, "RubinitePreviaDanio.dll");
+        if (File.Exists(anterior)) File.Delete(anterior);
 
         string ruta = Path.Combine(managed, "Assembly-CSharp.dll");
         using (var juego = Leer(managed, ruta))
         {
             var update = UpdateDeBossUI(juego);
-            if (update.Body.Instructions.Any(EsNuestraLlamada))
+            var existente = update.Body.Instructions.FirstOrDefault(EsNuestraLlamada);
+            if (existente != null && ((Mono.Cecil.MethodReference)existente.Operand).DeclaringType.Namespace == Ayudante)
             {
                 Console.WriteLine("Ya estaba instalado (se actualizó " + Ayudante + ".dll).");
                 return;
             }
+            QuitarLlamadas(juego, update);           // versión anterior con otro nombre
             using (var mod = Mono.Cecil.ModuleDefinition.ReadModule(new MemoryStream(ayudante)))
             {
                 var metodo = mod.GetType(Ayudante + ".Previa").Methods.First(x => x.Name == "Actualizar");
@@ -183,31 +205,36 @@ static class Parche
         Console.WriteLine("Listo: la barra de los jefes mostrará en amarillo el daño de tu próxima Estocada.");
     }
 
+    static bool QuitarLlamadas(Mono.Cecil.AssemblyDefinition juego, Mono.Cecil.MethodDefinition update)
+    {
+        bool habia = false;
+        var cuerpo = update.Body.Instructions;
+        for (int i = cuerpo.Count - 1; i >= 0; i--)
+        {
+            if (!EsNuestraLlamada(cuerpo[i])) continue;
+            habia = true;
+            cuerpo.RemoveAt(i);
+            if (i > 0 && cuerpo[i - 1].OpCode == Mono.Cecil.Cil.OpCodes.Ldarg_0) cuerpo.RemoveAt(i - 1);
+        }
+        var refs = juego.MainModule.AssemblyReferences;
+        foreach (var r in refs.Where(x => Nombres.Contains(x.Name)).ToList()) refs.Remove(r);
+        return habia;
+    }
+
     public static void Desinstalar(string managed)
     {
         string ruta = Path.Combine(managed, "Assembly-CSharp.dll");
         bool habia = false;
         using (var juego = Leer(managed, ruta))
         {
-            var update = UpdateDeBossUI(juego);
-            var cuerpo = update.Body.Instructions;
-            for (int i = cuerpo.Count - 1; i >= 0; i--)
-            {
-                if (!EsNuestraLlamada(cuerpo[i])) continue;
-                habia = true;
-                cuerpo.RemoveAt(i);
-                if (i > 0 && cuerpo[i - 1].OpCode == Mono.Cecil.Cil.OpCodes.Ldarg_0) cuerpo.RemoveAt(i - 1);
-            }
-            if (habia)
-            {
-                var refs = juego.MainModule.AssemblyReferences;
-                var r = refs.FirstOrDefault(x => x.Name == Ayudante);
-                if (r != null) refs.Remove(r);
-                Guardar(juego, ruta);
-            }
+            habia = QuitarLlamadas(juego, UpdateDeBossUI(juego));
+            if (habia) Guardar(juego, ruta);
         }
-        string rutaAyudante = Path.Combine(managed, Ayudante + ".dll");
-        if (File.Exists(rutaAyudante)) { File.Delete(rutaAyudante); habia = true; }
+        foreach (string n in Nombres)
+        {
+            string rutaAyudante = Path.Combine(managed, n + ".dll");
+            if (File.Exists(rutaAyudante)) { File.Delete(rutaAyudante); habia = true; }
+        }
         Console.WriteLine(habia ? "Listo: se quitó la vista previa de daño." : "No estaba instalado; no hay nada que quitar.");
     }
 }

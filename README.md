@@ -8,7 +8,7 @@ El daño no es un cálculo aproximado mío: se usa la misma fórmula que el jueg
 
 ## Cómo instalar
 
-1. Descarga `VistaPreviaDanio.exe` de la [última versión](../../releases/latest).
+1. Descarga `DamagePreview.exe` de la [última versión](../../releases/latest).
 2. Cierra el juego, abre el programa y elige la opción **1**.
 
 El programa encuentra el juego solo. Si no lo detecta, arrastra la carpeta del juego encima del .exe.
@@ -19,14 +19,14 @@ Windows puede mostrar el aviso de "Windows protegió tu PC" porque el programa n
 
 **Si el juego se actualiza** y la vista previa deja de salir, solo abre el programa de nuevo.
 
-> Después de terminar la primera vuelta, el juego oculta la barra de los jefes. Para ver la vista previa en la segunda vuelta necesitas también [Barra de vida de los jefes siempre visible](https://github.com/Vizpok/rubinite-barra-jefes).
+> Después de terminar la primera vuelta, el juego oculta la barra de los jefes. Para ver la vista previa en la segunda vuelta necesitas también [Barra de vida de los jefes siempre visible](https://github.com/Vizpok/rubinite-boss-health-bar).
 
 ## Qué cambia
 
-- Copia `RubinitePreviaDanio.dll` en `Rubinite_Data/Managed`. Ese archivo dibuja el tramo amarillo.
+- Copia `RubiniteDamagePreview.dll` en `Rubinite_Data/Managed`. Ese archivo dibuja el tramo amarillo.
 - Añade una llamada a ese archivo al principio de `BossUI.Update` en `Assembly-CSharp.dll`.
 
-Al desinstalar se quitan las dos cosas. Se puede usar junto con la [traducción al español](https://github.com/Vizpok/rubinite-traduccion-es) y la barra siempre visible sin que se pisen.
+Al desinstalar se quitan las dos cosas. Se puede usar junto con la [traducción al español](https://github.com/Vizpok/rubinite-spanish-translation) y la barra siempre visible sin que se pisen.
 
 Detalles:
 - Solo cuenta el daño de la Estocada. El extra de la Estocada Explosiva, que se detona después, no se muestra.

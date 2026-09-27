@@ -1,4 +1,4 @@
-﻿// Rubinite: vista previa del daño de la Estocada Crítica en la barra de vida del jefe.
+// Rubinite: vista previa del daño de la Estocada Crítica en la barra de vida del jefe.
 //
 // BossUI.Update() llama a Previa.Actualizar(this) en cada fotograma (el instalador inserta esa llamada).
 // Sobre el segmento visible de la barra se dibujan dos copias de la imagen HpBar:
@@ -13,7 +13,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace RubinitePreviaDanio
+namespace RubiniteDamagePreview
 {
     public static class Previa
     {
@@ -33,7 +33,7 @@ namespace RubinitePreviaDanio
             try { ActualizarInterno(ui); }
             catch (Exception e)
             {
-                if (!errorRegistrado) { errorRegistrado = true; Debug.LogWarning("[RubinitePreviaDanio] " + e); }
+                if (!errorRegistrado) { errorRegistrado = true; Debug.LogWarning("[RubiniteDamagePreview] " + e); }
             }
         }
 
@@ -45,16 +45,16 @@ namespace RubinitePreviaDanio
             int indice = CampoIndice != null ? (int)CampoIndice.GetValue(ui) : 0;
             indice = Mathf.Clamp(indice, 0, total - 1);
 
-            float danio = 0f;
+            float daño = 0f;
             bool oculta = CampoOculta != null && (bool)CampoOculta.GetValue(ui);
             if (!oculta && !ui.isFilling)
-                danio = DanioEstocada(ui);
+                daño = DañoEstocada(ui);
 
             for (int i = 0; i < ui.hPDetails.Count; i++)
             {
                 BossHPUIDetail d = ui.hPDetails[i];
                 if (d == null || d.HpBar == null) continue;
-                if (i != indice || danio <= 0f || !d.HpBar.gameObject.activeInHierarchy)
+                if (i != indice || daño <= 0f || !d.HpBar.gameObject.activeInHierarchy)
                 {
                     Ocultar(d.HpBar);
                     continue;
@@ -63,13 +63,13 @@ namespace RubinitePreviaDanio
                 float max = d.maxHP;
                 if (max - min <= 0.0001f) { Ocultar(d.HpBar); continue; }
                 float actual = d.HpBar.fillAmount;
-                float despues = Mathf.Clamp01((ui.currentHP - danio - min) / (max - min));
+                float despues = Mathf.Clamp01((ui.currentHP - daño - min) / (max - min));
                 if (despues >= actual) { Ocultar(d.HpBar); continue; }
                 Mostrar(d.HpBar, actual, despues);
             }
         }
 
-        static float DanioEstocada(BossUI ui)
+        static float DañoEstocada(BossUI ui)
         {
             GamePlayCore gp = GamePlayCore.Instance;
             if (gp == null || gp.player == null || gp.levelManager == null) return 0f;
@@ -96,11 +96,11 @@ namespace RubinitePreviaDanio
             if (marcas <= 0) return 0f;
             if (jugador.Attr != null && jugador.Attr.strikeConsumeSingleMark) marcas = 1;   // talismán Maestría de Marcas
 
-            float danio = jugador.CalculateATKOfStrike(marcas, objetivo);
+            float daño = jugador.CalculateATKOfStrike(marcas, objetivo);
             BasicEnemyCore basico = enemigo as BasicEnemyCore;
             if (basico != null && basico.isSecondRun && basico.enemyAttr != null)
-                danio *= basico.enemyAttr.secondRunHurtScale;
-            return danio;
+                daño *= basico.enemyAttr.secondRunHurtScale;
+            return daño;
         }
 
         static BasicEnemyCore DueñoBarraExtra(BossUI ui)
@@ -144,8 +144,8 @@ namespace RubinitePreviaDanio
             Capas c;
             if (capas.TryGetValue(barra, out c) && c.Previa != null && c.Encima != null) return c;
             c = new Capas();
-            c.Previa = Copiar(barra, "PreviaDanio");
-            c.Encima = Copiar(barra, "PreviaDanio_Restante");
+            c.Previa = Copiar(barra, "DamagePreview");
+            c.Encima = Copiar(barra, "DamagePreview_Remaining");
             int pos = barra.transform.GetSiblingIndex();
             c.Previa.transform.SetSiblingIndex(pos + 1);
             c.Encima.transform.SetSiblingIndex(pos + 2);
