@@ -2,6 +2,7 @@
 // Copia RubiniteDamagePreview.dll a Rubinite_Data\Managed e inserta al inicio de BossUI.Update():
 //     RubiniteDamagePreview.Previa.Actualizar(this);
 // Desinstalar quita esa llamada y el DLL. No toca nada más, así que convive con otros mods.
+// RubiniteDamagePreview.dll y Mono.Cecil.dll van sueltos junto a este .exe (nada va incrustado).
 
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,14 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
+[assembly: AssemblyTitle("DamagePreview")]
+[assembly: AssemblyDescription("Instalador del mod de vista previa del daño para Rubinite")]
+[assembly: AssemblyProduct("Rubinite Damage Preview")]
+[assembly: AssemblyCompany("Vizpok")]
+[assembly: AssemblyCopyright("Vizpok")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
+
 static class Programa
 {
     const string Ayudante = "RubiniteDamagePreview";
@@ -20,8 +29,6 @@ static class Programa
     static int Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
-        AppDomain.CurrentDomain.AssemblyResolve += (s, e) =>
-            new AssemblyName(e.Name).Name == "Mono.Cecil" ? Assembly.Load(Recurso("Mono.Cecil.dll")) : null;
         try { return Ejecutar(args); }
         catch (Exception e)
         {
@@ -65,7 +72,7 @@ static class Programa
         }
 
         string managed = Path.Combine(juego, @"Rubinite_Data\Managed");
-        if (accion == "1") Parche.Instalar(managed, Recurso(Ayudante + ".dll"));
+        if (accion == "1") Parche.Instalar(managed, Archivo(Ayudante + ".dll"));
         else Parche.Desinstalar(managed);
         Pausa();
         return 0;
@@ -87,10 +94,12 @@ static class Programa
         return false;
     }
 
-    public static byte[] Recurso(string nombre)
+    // Archivo que va junto al .exe (descomprime todo el .zip en la misma carpeta).
+    static byte[] Archivo(string nombre)
     {
-        using (Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream(nombre))
-        using (MemoryStream m = new MemoryStream()) { s.CopyTo(m); return m.ToArray(); }
+        string ruta = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, nombre);
+        if (!File.Exists(ruta)) throw new Exception("Falta " + nombre + " junto al programa. Descomprime todo el .zip en una misma carpeta.");
+        return File.ReadAllBytes(ruta);
     }
 
     static void Pausa()
