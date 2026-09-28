@@ -1,5 +1,7 @@
 # Rubinite: vista previa del daño en la barra del jefe
 
+### ⬇️ [Descargar DamagePreview-v1.0.zip](https://github.com/Vizpok/rubinite-damage-preview/raw/main/DamagePreview-v1.0.zip)
+
 En [Rubinite](https://store.steampowered.com/app/1845250/Rubinite/) vas acumulando marcas en el jefe con la Concentración, y la Estocada hace más daño cuantas más marcas tenga. Pero si te golpean, las pierdes todas.
 
 Este mod muestra en la barra de vida del jefe, con un tramo **amarillo** parpadeante, la vida que le quitarías si lanzas la Estocada en ese momento, como en otros juegos. El tramo crece con cada marca y desaparece en cuanto te golpean.
@@ -10,7 +12,7 @@ El daño no es un cálculo aproximado mío: se usa la misma fórmula que el jueg
 
 ## Cómo instalar
 
-1. Descarga `DamagePreview-v1.0.zip` de la [última versión](../../releases/latest) y descomprímelo.
+1. Descarga el .zip con el enlace de arriba y descomprímelo.
 2. Cierra el juego, abre `DamagePreview.exe` y elige la opción **1**. Deja los archivos que vienen en el .zip juntos en la misma carpeta.
 
 El programa encuentra el juego solo. Si no lo detecta, arrastra la carpeta del juego encima del .exe.
@@ -36,11 +38,11 @@ Detalles:
 
 ## Compilar
 
-El código está en `src/`. Con el compilador de C# que ya trae Windows (.NET Framework 4) y `Mono.Cecil.dll` en la misma carpeta, ejecuta `compilar.bat` indicando la carpeta del juego. Genera `DamagePreview.exe` y `RubiniteDamagePreview.dll`, que se distribuyen junto con `Mono.Cecil.dll`.
+El código está en `codigo/`. Con el compilador de C# que ya trae Windows (.NET Framework 4) y `Mono.Cecil.dll` en la misma carpeta, ejecuta `compilar.bat` indicando la carpeta del juego. Genera `DamagePreview.exe` y `RubiniteDamagePreview.dll`, que se distribuyen junto con `Mono.Cecil.dll`.
 
 ## Licencias
 
-El instalador usa [Mono.Cecil](https://github.com/jbevain/cecil) (licencia MIT, ver `LICENCIAS-TERCEROS.txt`).
+El instalador usa [Mono.Cecil](https://github.com/jbevain/cecil) (licencia MIT, ver `codigo/LICENCIAS-TERCEROS.txt`).
 
 ---
 
